@@ -41,6 +41,8 @@ module Network.Google.Resource.Drive.Files.List
     , flPageSize
     ) where
 
+
+import qualified Data.Text as T
 import           Network.Google.Drive.Types
 import           Network.Google.Prelude
 
@@ -56,7 +58,8 @@ type FilesListResource =
                  QueryParam "corpus" FilesListCorpus :>
                    QueryParam "pageToken" Text :>
                      QueryParam "pageSize" (Textual Int32) :>
-                       QueryParam "alt" AltJSON :> Get '[JSON] FileList
+                       QueryParam "alt" AltJSON :> 
+                        QueryParam "fields" Text :> Get '[JSON] FileList
 
 -- | Lists or searches files.
 --
@@ -68,6 +71,7 @@ data FilesList = FilesList'
     , _flCorpus    :: !FilesListCorpus
     , _flPageToken :: !(Maybe Text)
     , _flPageSize  :: !(Textual Int32)
+    , _flFields    :: ![Text]
     } deriving (Eq,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'FilesList' with the minimum fields required to make a request.
@@ -95,6 +99,7 @@ filesList =
     , _flCorpus = FLCUser
     , _flPageToken = Nothing
     , _flPageSize = 100
+    , _flFields = mempty
     }
 
 -- | A comma-separated list of sort keys. Valid keys are \'createdTime\',
@@ -136,6 +141,10 @@ flPageSize
   = lens _flPageSize (\ s a -> s{_flPageSize = a}) .
       _Coerce
 
+-- | Fields to get in partial response
+flFields :: Lens' FilesList [Text]
+flFields = lens _flFields (\ s a -> s{_flFields = a})
+
 instance GoogleRequest FilesList where
         type Rs FilesList = FileList
         type Scopes FilesList =
@@ -152,7 +161,7 @@ instance GoogleRequest FilesList where
               _flPageToken
               (Just _flPageSize)
               (Just AltJSON)
+              (Just $ T.intercalate "," _flFields)
               driveService
-          where go
-                  = buildClient (Proxy :: Proxy FilesListResource)
-                      mempty
+          where 
+            go = buildClient (Proxy :: Proxy FilesListResource) mempty

@@ -37,6 +37,7 @@ module Network.Google.Resource.Drive.Permissions.Get
     , pgPermissionId
     ) where
 
+import qualified Data.Text as T
 import           Network.Google.Drive.Types
 import           Network.Google.Prelude
 
@@ -49,7 +50,8 @@ type PermissionsGetResource =
            Capture "fileId" Text :>
              "permissions" :>
                Capture "permissionId" Text :>
-                 QueryParam "alt" AltJSON :> Get '[JSON] Permission
+                  QueryParam "alt" AltJSON :> 
+                    QueryParam "fields" Text :> Get '[JSON] Permission
 
 -- | Gets a permission by ID.
 --
@@ -57,6 +59,7 @@ type PermissionsGetResource =
 data PermissionsGet = PermissionsGet'
     { _pgFileId       :: !Text
     , _pgPermissionId :: !Text
+    , _pgFields :: [Text]
     } deriving (Eq,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'PermissionsGet' with the minimum fields required to make a request.
@@ -69,11 +72,13 @@ data PermissionsGet = PermissionsGet'
 permissionsGet
     :: Text -- ^ 'pgFileId'
     -> Text -- ^ 'pgPermissionId'
+    -> [Text]
     -> PermissionsGet
-permissionsGet pPgFileId_ pPgPermissionId_ =
+permissionsGet pPgFileId_ pPgPermissionId_ pPgFields_ =
     PermissionsGet'
     { _pgFileId = pPgFileId_
     , _pgPermissionId = pPgPermissionId_
+    , _pgFields = pPgFields_
     }
 
 -- | The ID of the file.
@@ -86,6 +91,9 @@ pgPermissionId
   = lens _pgPermissionId
       (\ s a -> s{_pgPermissionId = a})
 
+pgFields :: Lens' PermissionsGet [Text]
+pgFields = lens _pgFields (\ s a -> s{_pgFields = a})      
+
 instance GoogleRequest PermissionsGet where
         type Rs PermissionsGet = Permission
         type Scopes PermissionsGet =
@@ -96,7 +104,7 @@ instance GoogleRequest PermissionsGet where
                "https://www.googleapis.com/auth/drive.photos.readonly",
                "https://www.googleapis.com/auth/drive.readonly"]
         requestClient PermissionsGet'{..}
-          = go _pgFileId _pgPermissionId (Just AltJSON)
+          = go _pgFileId _pgPermissionId (Just AltJSON) (Just $ T.intercalate "," _pgFields)
               driveService
           where go
                   = buildClient (Proxy :: Proxy PermissionsGetResource)
