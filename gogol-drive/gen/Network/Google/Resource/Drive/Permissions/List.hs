@@ -36,6 +36,8 @@ module Network.Google.Resource.Drive.Permissions.List
     , plFileId
     ) where
 
+
+import qualified Data.Text as T
 import           Network.Google.Drive.Types
 import           Network.Google.Prelude
 
@@ -48,13 +50,15 @@ type PermissionsListResource =
            Capture "fileId" Text :>
              "permissions" :>
                QueryParam "alt" AltJSON :>
-                 Get '[JSON] PermissionList
+                 QueryParam "fields" Text :>
+                   Get '[JSON] PermissionList
 
 -- | Lists a file\'s permissions.
 --
 -- /See:/ 'permissionsList' smart constructor.
-newtype PermissionsList = PermissionsList'
+data PermissionsList = PermissionsList'
     { _plFileId :: Text
+    , _plFields :: [Text]
     } deriving (Eq,Show,Data,Typeable,Generic)
 
 -- | Creates a value of 'PermissionsList' with the minimum fields required to make a request.
@@ -62,17 +66,21 @@ newtype PermissionsList = PermissionsList'
 -- Use one of the following lenses to modify other fields as desired:
 --
 -- * 'plFileId'
-permissionsList
-    :: Text -- ^ 'plFileId'
-    -> PermissionsList
-permissionsList pPlFileId_ =
+permissionsList :: Text -- ^ 'plFileId'
+                -> [Text]
+                -> PermissionsList
+permissionsList pPlFileId_ pPlFields_=
     PermissionsList'
     { _plFileId = pPlFileId_
+    , _plFields = pPlFields_
     }
 
 -- | The ID of the file.
 plFileId :: Lens' PermissionsList Text
 plFileId = lens _plFileId (\ s a -> s{_plFileId = a})
+
+plFields :: Lens' PermissionsList [Text]
+plFields = lens _plFields (\ s a -> s{_plFields = a})
 
 instance GoogleRequest PermissionsList where
         type Rs PermissionsList = PermissionList
@@ -84,7 +92,7 @@ instance GoogleRequest PermissionsList where
                "https://www.googleapis.com/auth/drive.photos.readonly",
                "https://www.googleapis.com/auth/drive.readonly"]
         requestClient PermissionsList'{..}
-          = go _plFileId (Just AltJSON) driveService
+          = go _plFileId (Just AltJSON) (Just $ T.intercalate "," _plFields) driveService
           where go
                   = buildClient
                       (Proxy :: Proxy PermissionsListResource)
